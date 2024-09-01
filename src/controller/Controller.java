@@ -2,26 +2,39 @@ package controller;
 
 import model.Board;
 import model.Item;
+import model.ItemType;
 import model.Timer;
-import view.GameBoard;
+import utilities.Utility;
 import view.GameWindow;
 import view.MainMenu;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 public class Controller {
-    static int[] gameStats = new int[7];
+    public static final int MAX_MOVES = 100;
+    public static final int MAX_FRUITS = ItemType.values().length;
+
+    static Map<ItemType, Integer> itemPops = new HashMap<ItemType, Integer>();
     static int[] totalStats = new int[9];
     static int[] settings = new int[5];
     static Board board = new Board();
-    static int movesLeft = -1;
+    static int movesLeft = MAX_MOVES;
     static Timer timer = new Timer();
     static Item selectedItem = null;
     static GameWindow gameWindow = null;
+    static int maxNumberOfFruits = MAX_FRUITS;
 
     public static void start(int[] Settings) {
 //        System.arraycopy(Settings, 0, settings, 0, settings.length);
         board.initializeBoard();
         board.evaluateBoard();
-        gameWindow = new GameWindow(board, settings, timer);
+        Arrays.stream(ItemType.values()).forEach(itemType -> {
+            itemPops.put(itemType, 0);
+        });
+        itemPops.remove(ItemType.Empty);
+        gameWindow = new GameWindow(board, itemPops, settings, timer);
         //GameBoard gb = new GameBoard(board, settings, gameStats, timer);
     }
 
@@ -34,20 +47,53 @@ public class Controller {
     }
 
     public static void handleClick(int x, int y) {
-        GameBoard gameBoard = gameWindow.getGameBoard();
         if (selectedItem != null) {
-            gameBoard.deselectItem(selectedItem.getXPosition(), selectedItem.getYPosition());
-            board.executeSwap(selectedItem.getXPosition(), selectedItem.getYPosition(), x, y);
+            useMove();
+            gameWindow.deselectItemOnGameboard(selectedItem.getXPosition(), selectedItem.getYPosition());
+            Map<ItemType, Integer> fruitsPopped;
+            fruitsPopped = board.executeSwap(selectedItem.getXPosition(), selectedItem.getYPosition(), x, y);
+            updateStats(fruitsPopped);
+            gameWindow.updateStatsOnStatsWindow(itemPops);
             selectedItem = null;
-            gameBoard.refreshBoard(board);
+            System.out.println("Done");
+            board.printBoard();
+            gameWindow.refreshGameboard(board);
+            // TODO: Game end
+            if (getNumberOfMoves() == 0)
+                System.exit(0);
         } else {
             selectedItem = board.getItemAt(x, y);
-            gameBoard.selectItem(x, y);
+            gameWindow.selectItemOnGameboard(x, y);
         }
+    }
+
+    public static void setNumberOfFruits(int numberOfFruits) {
+        maxNumberOfFruits = numberOfFruits;
+    }
+
+    private static void updateStats(Map<ItemType, Integer> fruitsPopped) {
+        Utility.addMaps(itemPops, fruitsPopped);
+        System.out.println(fruitsPopped);
     }
 
     public static void main(String[] args) {
         loadStats();
         MainMenu mm = new MainMenu();
+    }
+
+    public static int getNumberOfFruits() {
+        return maxNumberOfFruits;
+    }
+
+    public static void setNumberOfMoves(int value) {
+        movesLeft = value;
+    }
+
+    public static int getNumberOfMoves() {
+        return movesLeft;
+    }
+
+    private static void useMove() {
+        setNumberOfMoves(getNumberOfMoves() - 1) ;
     }
 }

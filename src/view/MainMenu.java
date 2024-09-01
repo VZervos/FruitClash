@@ -115,6 +115,14 @@ public class MainMenu extends JFrame implements ActionListener {
         setVisible(true);
     }
 
+    public void activateFrame() {
+        setEnabled(true);
+    }
+
+    public void deactivateFrame() {
+        setEnabled(false);
+    }
+
     /**
      * Button click event handler
      *
@@ -128,7 +136,8 @@ public class MainMenu extends JFrame implements ActionListener {
             Controller c = new Controller(settings);
             dispose();
         } else if (source.equals(this.settingsButton)) {
-
+            Settings s = new Settings(this);
+            deactivateFrame();
         } else if (source.equals(this.statsButton)) {
 
         } else {

@@ -31,6 +31,7 @@ public class GameBoard extends JPanel implements ActionListener {
     public void refreshBoard(Board board) {
         removeAll();
         List<Item> boardItems = board.getAllBoardItems();
+        int i = 0;
         for (Item item : boardItems) {
             int XPos = item.getXPosition();
             int YPos = item.getYPosition();

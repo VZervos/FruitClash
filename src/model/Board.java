@@ -1,17 +1,18 @@
 package model;
 
+import controller.Controller;
 import model.fruits.*;
 import utilities.Utility;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class Board {
     public final static int BoardWidth = 7;
     public final static int BoardHeight = 7;
 
     static Item[][] board = new Item[BoardHeight][BoardWidth];
+
+    private Fruit addEmpty(int x, int y) { return new Empty(new int[]{x, y}); }
 
     private Fruit addApple(int x, int y) {
         return new Apple(new int[]{x, y});
@@ -52,6 +53,7 @@ public class Board {
     }
 
     private final CreateFruit[] addFruit = new CreateFruit[]{
+            this::addEmpty,
             this::addApple,
             this::addLemon,
             this::addOrange,
@@ -77,36 +79,42 @@ public class Board {
         swapItems(item1, item2);
     }
 
-    public void executeSwap(int x1, int y1, int x2, int y2) {
+    public Map<ItemType, Integer> executeSwap(int x1, int y1, int x2, int y2) {
         swapItems(getItemAt(x1, y1), getItemAt(x2, y2));
         System.out.println("Moved " + x1 + y1 + " " + x2 + y2);
-        evaluateBoard();
+        Map<ItemType, Integer> fruitsPopped;
+        fruitsPopped = evaluateBoard();
         printBoard();
         if (!hasAvailableMoves()) {
             System.out.println("No available moves. Resetting the board.");
             initializeBoard();
             printBoard();
         }
+        return fruitsPopped;
     }
 
 
-    public void evaluateBoard() {
+    public Map<ItemType, Integer> evaluateBoard() {
+        Map<ItemType, Integer> fruitsPopped = new HashMap<>();
         do {
-            evaluteCombinations();
+            Utility.addMaps(fruitsPopped, evaluteCombinations());
             printBoard();
         } while (fillGaps());
+        return fruitsPopped;
     }
 
-    private void evaluteCombinations() {
+    private Map<ItemType, Integer> evaluteCombinations() {
+        Map<ItemType, Integer> fruitsPopped = new HashMap<>();
         boolean isStillClearing;
         do {
             isStillClearing = false;
-            isStillClearing = evaluateRow();
-            isStillClearing = evaluateColumn() || isStillClearing;
+            isStillClearing = evaluateRow(fruitsPopped, true);
+            isStillClearing = evaluateColumn(fruitsPopped, true) || isStillClearing;
         } while (isStillClearing);
+        return fruitsPopped;
     }
 
-    private void printBoard() {
+    public void printBoard() {
         System.out.println("\nBoard:");
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[i].length; j++) {
@@ -121,12 +129,12 @@ public class Board {
         }
     }
 
-    public boolean evaluateRow() {
+    public boolean evaluateRow(Map<ItemType, Integer> fruitsPopped, boolean removeItems) {
         boolean clearedBoard = false;
         ItemType itemFoundType = null;
         List<Item> itemsToRemove = new ArrayList<>();
         for (int x = 0; x < BoardHeight + 1; x++) {
-            clearedBoard = clearItems(itemsToRemove) || clearedBoard;
+            clearedBoard = clearItems(itemsToRemove, fruitsPopped, removeItems) || clearedBoard;
             itemsToRemove.clear();
             itemFoundType = null;
             for (int y = 0; y < BoardWidth + 1; y++) {
@@ -134,7 +142,7 @@ public class Board {
                 ItemType currentItemType = currentItem != null ? currentItem.getItemType() : null;
 
                 if (x >= BoardHeight || itemFoundType == null || !itemFoundType.equals(currentItemType)) {
-                    clearedBoard = clearItems(itemsToRemove) || clearedBoard;
+                    clearedBoard = clearItems(itemsToRemove, fruitsPopped, removeItems) || clearedBoard;
                     itemsToRemove.clear();
                     itemFoundType = currentItemType;
                 }
@@ -144,12 +152,12 @@ public class Board {
         return clearedBoard;
     }
 
-    public boolean evaluateColumn() {
+    public boolean evaluateColumn(Map<ItemType, Integer> fruitsPopped, boolean removeItems) {
         boolean clearedBoard = false;
         ItemType itemFoundType = null;
         List<Item> itemsToRemove = new ArrayList<>();
         for (int y = 0; y < BoardWidth + 1; y++) {
-            clearedBoard = clearItems(itemsToRemove) || clearedBoard;
+            clearedBoard = clearItems(itemsToRemove, fruitsPopped, removeItems) || clearedBoard;
             itemsToRemove.clear();
             itemFoundType = null;
             for (int x = 0; x < BoardHeight + 1; x++) {
@@ -157,7 +165,7 @@ public class Board {
                 ItemType currentItemType = currentItem != null ? currentItem.getItemType() : null;
 
                 if (x >= BoardWidth || itemFoundType == null || !itemFoundType.equals(currentItemType)) {
-                    clearedBoard = clearItems(itemsToRemove) || clearedBoard;
+                    clearedBoard = clearItems(itemsToRemove, fruitsPopped, removeItems) || clearedBoard;
                     itemsToRemove.clear();
                     itemFoundType = currentItemType;
                 }
@@ -168,47 +176,55 @@ public class Board {
     }
 
     private boolean fillGaps() {
-        boolean filledGap = false;
+        boolean itemFall;
         do {
-            filledGap = false;
+            itemFall = false;
             for (int y = 0; y < BoardWidth; y++) {
                 for (int i = 0; i < BoardHeight - 1; i++) {
                     int j = i + 1;
                     if (board[i][y].getItemType() != ItemType.Empty && board[j][y].getItemType() == ItemType.Empty) {
                         swapItems(i, y, j, y);
-                        filledGap = true;
+                        itemFall = true;
                     }
                 }
             }
-        } while (filledGap);
+        } while (itemFall);
         return fillEmptyCells();
     }
 
-    private boolean clearItems(List<Item> itemsToRemove) {
-        if (itemsToRemove.size() > 2 && itemsToRemove.get(0).getItemType() != ItemType.Empty) {
+    private boolean clearItems(List<Item> itemsToRemove, Map<ItemType, Integer> fruitsPopped, boolean removeItems) {
+        boolean hasItemsToRemove = itemsToRemove != null && itemsToRemove.size() > 2 && itemsToRemove.get(0).getItemType() != ItemType.Empty;
+        if (hasItemsToRemove && removeItems) {
             for (Item item : itemsToRemove) {
                 int x = item.getXPosition();
                 int y = item.getYPosition();
                 setItemAt(x, y, new Empty(new int[]{x, y}));
+                if (fruitsPopped != null && fruitsPopped.containsKey(item.getItemType())) {
+                    fruitsPopped.replace(item.getItemType(), fruitsPopped.get(item.getItemType()) + 1);
+                } else if (fruitsPopped != null) {
+                    fruitsPopped.put(item.getItemType(), 1);
+                }
             }
             System.out.print("Remove: [");
             itemsToRemove.forEach(i -> System.out.print(i.getItemType().toString().charAt(0) + "(" + i.getXPosition() + ", " + i.getYPosition() + ") "));
             System.out.println(itemsToRemove);
-            return true;
         }
-        return false;
+        return hasItemsToRemove;
     }
 
     public boolean fillEmptyCells() {
         boolean emptyCellFound = false;
+        System.out.println("fillEmptyCells");
+        printBoard();
         for (int i = 0; i < BoardHeight; i++) {
             for (int j = 0; j < BoardWidth; j++) {
                 if (board[i][j].getItemType() == ItemType.Empty) {
-                    board[i][j] = addFruit[Utility.getRandom(1, 6)].addFruit(i, j); // settings[0])].addFruit(i, j);
+                    board[i][j] = addFruit[Utility.getRandom(1, Controller.getNumberOfFruits())].addFruit(i, j); // settings[0])].addFruit(i, j);
                     emptyCellFound = true;
                 }
             }
         }
+        printBoard();
         return emptyCellFound;
     }
 
@@ -224,7 +240,7 @@ public class Board {
         do {
             for (int x = 0; x < BoardHeight; x++) {
                 for (int y = 0; y < BoardWidth; y++) {
-                    board[x][y] = addFruit[Utility.getRandom(1, 6)].addFruit(x, y);
+                    board[x][y] = addFruit[Utility.getRandom(1, Controller.getNumberOfFruits())].addFruit(x, y);
                 }
             }
         } while (!hasAvailableMoves());
@@ -236,7 +252,7 @@ public class Board {
         for (int x = 0; x < BoardHeight; x++) {
             for (int y = 0; y < BoardWidth - 1; y++) {
                 swapItems(x, y, x, y + 1); // Swap horizontally
-                boolean matchFound = evaluateRow() || evaluateColumn();
+                boolean matchFound = evaluateRow(null, false) || evaluateColumn(null, false);
                 swapItems(x, y, x, y + 1); // Swap back to original position
 
                 if (matchFound) {
@@ -249,7 +265,7 @@ public class Board {
         for (int x = 0; x < BoardHeight - 1; x++) {
             for (int y = 0; y < BoardWidth; y++) {
                 swapItems(x, y, x + 1, y); // Swap vertically
-                boolean matchFound = evaluateRow() || evaluateColumn();
+                boolean matchFound = evaluateRow(null, false) || evaluateColumn(null, false);
                 swapItems(x, y, x + 1, y); // Swap back to original position
 
                 if (matchFound) {
