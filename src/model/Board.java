@@ -5,6 +5,7 @@ import model.fruits.*;
 import utilities.Utility;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Board {
     public final static int BoardWidth = 7;
@@ -84,6 +85,11 @@ public class Board {
         System.out.println("Moved " + x1 + y1 + " " + x2 + y2);
         Map<ItemType, Integer> fruitsPopped;
         fruitsPopped = evaluateBoard();
+
+        if (fruitsPopped.isEmpty()) {
+            swapItems(getItemAt(x2, y2), getItemAt(x1, y1));
+        }
+
         printBoard();
         if (!hasAvailableMoves()) {
             System.out.println("No available moves. Resetting the board.");
@@ -134,16 +140,14 @@ public class Board {
         ItemType itemFoundType = null;
         List<Item> itemsToRemove = new ArrayList<>();
         for (int x = 0; x < BoardHeight + 1; x++) {
-            clearedBoard = clearItems(itemsToRemove, fruitsPopped, removeItems) || clearedBoard;
-            itemsToRemove.clear();
+            clearedBoard = clearItemsFromBoard(fruitsPopped, removeItems, clearedBoard, itemsToRemove);
             itemFoundType = null;
             for (int y = 0; y < BoardWidth + 1; y++) {
                 Item currentItem = getItemAt(x, y);
                 ItemType currentItemType = currentItem != null ? currentItem.getItemType() : null;
 
                 if (x >= BoardHeight || itemFoundType == null || !itemFoundType.equals(currentItemType)) {
-                    clearedBoard = clearItems(itemsToRemove, fruitsPopped, removeItems) || clearedBoard;
-                    itemsToRemove.clear();
+                    clearedBoard = clearItemsFromBoard(fruitsPopped, removeItems, clearedBoard, itemsToRemove);
                     itemFoundType = currentItemType;
                 }
                 itemsToRemove.add(currentItem);
@@ -157,21 +161,37 @@ public class Board {
         ItemType itemFoundType = null;
         List<Item> itemsToRemove = new ArrayList<>();
         for (int y = 0; y < BoardWidth + 1; y++) {
-            clearedBoard = clearItems(itemsToRemove, fruitsPopped, removeItems) || clearedBoard;
-            itemsToRemove.clear();
+//            int continuousItemsFound = 0;
+            clearedBoard = clearItemsFromBoard(fruitsPopped, removeItems, clearedBoard, itemsToRemove);
             itemFoundType = null;
             for (int x = 0; x < BoardHeight + 1; x++) {
                 Item currentItem = getItemAt(x, y);
                 ItemType currentItemType = currentItem != null ? currentItem.getItemType() : null;
 
                 if (x >= BoardWidth || itemFoundType == null || !itemFoundType.equals(currentItemType)) {
-                    clearedBoard = clearItems(itemsToRemove, fruitsPopped, removeItems) || clearedBoard;
-                    itemsToRemove.clear();
+//                    if (continuousItemsFound == 4) {
+//                        for (int i = 0; i < BoardHeight + 1; i ++) {
+//                            Item tmpCurrentItem = getItemAt(i, y);
+//                            itemsToRemove.add(tmpCurrentItem);
+//                        }
+//                        itemsToRemove = itemsToRemove.stream()
+//                                .distinct()
+//                                .collect(Collectors.toList());
+//                    }
+                    clearedBoard = clearItemsFromBoard(fruitsPopped, removeItems, clearedBoard, itemsToRemove);
                     itemFoundType = currentItemType;
+//                    continuousItemsFound = 0;
                 }
                 itemsToRemove.add(currentItem);
+//                continuousItemsFound++;
             }
         }
+        return clearedBoard;
+    }
+
+    private boolean clearItemsFromBoard(Map<ItemType, Integer> fruitsPopped, boolean removeItems, boolean clearedBoard, List<Item> itemsToRemove) {
+        clearedBoard = clearItems(itemsToRemove, fruitsPopped, removeItems) || clearedBoard;
+        itemsToRemove.clear();
         return clearedBoard;
     }
 

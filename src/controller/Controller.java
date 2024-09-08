@@ -20,7 +20,7 @@ public class Controller {
     static int[] totalStats = new int[9];
     static int[] settings = new int[5];
     static Board board = new Board();
-    static int movesLeft = MAX_MOVES;
+    static int movesLeft = MAX_MOVES / 2;
     static Timer timer = new Timer();
     static Item selectedItem = null;
     static GameWindow gameWindow = null;
@@ -48,23 +48,31 @@ public class Controller {
 
     public static void handleClick(int x, int y) {
         if (selectedItem != null) {
-            useMove();
             gameWindow.deselectItemOnGameboard(selectedItem.getXPosition(), selectedItem.getYPosition());
             Map<ItemType, Integer> fruitsPopped;
             fruitsPopped = board.executeSwap(selectedItem.getXPosition(), selectedItem.getYPosition(), x, y);
+            if (!fruitsPopped.isEmpty())
+                useMove();
+
             updateStats(fruitsPopped);
             gameWindow.updateStatsOnStatsWindow(itemPops);
+
             selectedItem = null;
             System.out.println("Done");
             board.printBoard();
             gameWindow.refreshGameboard(board);
+
             // TODO: Game end
             if (getNumberOfMoves() == 0)
-                System.exit(0);
+                endGame();
         } else {
             selectedItem = board.getItemAt(x, y);
             gameWindow.selectItemOnGameboard(x, y);
         }
+    }
+
+    private static void endGame() {
+        gameWindow.endGame(itemPops);
     }
 
     public static void setNumberOfFruits(int numberOfFruits) {

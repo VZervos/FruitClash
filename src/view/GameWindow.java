@@ -52,6 +52,11 @@ public class GameWindow extends JFrame implements ActionListener {
 
     }
 
+    public void endGame(Map<ItemType, Integer> fruitsPopped) {
+        dispose();
+        new GameEnd(fruitsPopped);
+    }
+
     public void refreshGameboard(Board board) {
         gameBoard.refreshBoard(board);
     }

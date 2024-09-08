@@ -46,7 +46,7 @@ public class Settings extends JFrame implements ActionListener, ChangeListener {
         fruitsNumberSlider.setPaintLabels(true);
         fruitsNumberSlider.addChangeListener(this);
         settingsPanel.add(fruitsNumberSlider);
-        fruitsNumberLabel.setText("Fruits amount: " + fruitsNumberSlider.getValue());
+        fruitsNumberLabel.setText("Amount of Different Fruits: " + fruitsNumberSlider.getValue());
 
 
         movesLabel = new JLabel();
@@ -54,7 +54,7 @@ public class Settings extends JFrame implements ActionListener, ChangeListener {
         settingsPanel.add(movesLabel);
 
         movesSlider = new JSlider(5, Controller.MAX_MOVES);
-        movesSlider.setValue(Controller.MAX_MOVES);
+        movesSlider.setValue(Controller.getNumberOfMoves());
         movesSlider.setSnapToTicks(true);
         movesSlider.setPaintTrack(true);
         movesSlider.setPaintTicks(true);
@@ -84,7 +84,7 @@ public class Settings extends JFrame implements ActionListener, ChangeListener {
     @Override
     public void stateChanged(ChangeEvent e) {
         if (e.getSource() == fruitsNumberSlider)
-            fruitsNumberLabel.setText("Fruits Number: " + fruitsNumberSlider.getValue());
+            fruitsNumberLabel.setText("Amount of Different Fruits: " + fruitsNumberSlider.getValue());
         else if (e.getSource() == movesSlider)
             movesLabel.setText("Moves Amount: " + movesSlider.getValue());
         else
