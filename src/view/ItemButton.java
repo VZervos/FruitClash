@@ -69,7 +69,8 @@ public class ItemButton extends JButton {
 //        this.button = setIcon();
         this.button = new JButton();
         this.button.setName(Integer.toString(i) + j);
-        this.button.setText(item.getItemType().toString().substring(0, 1));
+//        this.button.setText(item.getItemType().toString().substring(0, 1));
+        this.button.setBackground(CellColor.getColor(item.getItemType()));
 //        this.button.setBorder(null);
 //        this.button.setFocusPainted(false);
 //        this.button.setContentAreaFilled(false);

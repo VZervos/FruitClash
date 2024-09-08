@@ -26,13 +26,13 @@ public class GameWindow extends JFrame implements ActionListener {
         setTitle("FruitClash");
         setBounds(200, 100, 800, 600);
 
-        ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource(
-                "/resources/background.png"))); // TODO
-        Image image;
-        image = icon.getImage();
-        image = image.getScaledInstance(800, 600, java.awt.Image.SCALE_SMOOTH);
-        icon = new ImageIcon(image);
-        setContentPane(new JLabel(icon));
+//        ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource(
+//                "/resources/background.png"))); // TODO
+//        Image image;
+//        image = icon.getImage();
+//        image = image.getScaledInstance(800, 600, java.awt.Image.SCALE_SMOOTH);
+//        icon = new ImageIcon(image);
+//        setContentPane(new JLabel(icon));
         setLayout(new BorderLayout(0, 3));
         setPreferredSize(new Dimension(800, 600));
         gameBoard = new GameBoard(board);
